@@ -1,4 +1,4 @@
-# Claude Code + GitHub Copilot setup
+# Claude Code with GitHub Copilot setup
 
 This guide explains how to make Claude Code delegate work to GitHub Copilot through an MCP bridge.
 
@@ -23,18 +23,6 @@ You should also be signed in to GitHub Copilot:
 
 ```bash
 copilot login
-```
-
-If you are already signed in, you can verify with a quick smoke test:
-
-```bash
-copilot -p "Reply with exactly OK" --allow-all-tools --allow-all-paths -s
-```
-
-Expected output:
-
-```text
-OK
 ```
 
 ## Step 1: create the Claude-side bridge directory

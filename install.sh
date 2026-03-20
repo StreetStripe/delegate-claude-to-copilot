@@ -19,7 +19,7 @@ Usage: ./install.sh [--default] [--dry-run]
 Options:
   --default  Also install the user-level CLAUDE.md instructions that make Copilot
              the default coding delegate. If ~/.claude/CLAUDE.md already exists,
-             an example file will be written instead of overwriting it.
+             the instructions will be prepended to it.
   --dry-run  Show what would be done without modifying files.
 EOF
       exit 0
@@ -31,13 +31,10 @@ EOF
   esac
 done
 
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-TEMPLATES_DIR="$SCRIPT_DIR/templates"
 CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude}"
 BRIDGE_DIR="$CLAUDE_HOME/copilot-mcp"
 SKILL_DIR="$CLAUDE_HOME/skills/copilot"
 USER_CLAUDE_MD="$CLAUDE_HOME/CLAUDE.md"
-EXAMPLE_CLAUDE_MD="$CLAUDE_HOME/CLAUDE.copilot-example.md"
 BACKUP_DIR="$CLAUDE_HOME/backups/copilot-bridge-setup/$(date +%Y%m%d-%H%M%S)"
 
 say() {
@@ -76,13 +73,39 @@ backup_file() {
   run cp "$target" "$backup_target"
 }
 
-install_file() {
-  local source="$1"
-  local target="$2"
+write_file() {
+  local target="$1"
+  local content="$2"
 
   run mkdir -p "$(dirname "$target")"
   backup_file "$target"
-  run cp "$source" "$target"
+  
+  if [ "$DRY_RUN" -eq 1 ]; then
+    say "[dry-run] Writing to $target"
+  else
+    printf '%s\n' "$content" > "$target"
+  fi
+}
+
+prepend_file() {
+  local target="$1"
+  local content="$2"
+
+  if [ ! -f "$target" ]; then
+    write_file "$target" "$content"
+    return
+  fi
+
+  backup_file "$target"
+  
+  if [ "$DRY_RUN" -eq 1 ]; then
+    say "[dry-run] Prepending to $target"
+  else
+    local temp_file
+    temp_file=$(mktemp)
+    printf '%s\n\n%s\n' "$content" "$(cat "$target")" > "$temp_file"
+    mv "$temp_file" "$target"
+  fi
 }
 
 register_bridge() {
@@ -96,15 +119,156 @@ register_bridge() {
   claude mcp add --scope user copilot-bridge -- node "$BRIDGE_DIR/index.js"
 }
 
-install_default_policy() {
-  if [ -f "$USER_CLAUDE_MD" ]; then
-    say "Found existing $USER_CLAUDE_MD"
-    say "Writing example policy to $EXAMPLE_CLAUDE_MD instead of overwriting your file."
-    install_file "$TEMPLATES_DIR/CLAUDE.md" "$EXAMPLE_CLAUDE_MD"
-  else
-    install_file "$TEMPLATES_DIR/CLAUDE.md" "$USER_CLAUDE_MD"
-  fi
+# --- Content Definitions ---
+
+read -r -d '' CONTENT_PACKAGE_JSON <<'EOF'
+{
+  "name": "copilot-mcp-bridge",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
 }
+EOF
+
+read -r -d '' CONTENT_INDEX_JS <<'EOF'
+#!/usr/bin/env node
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
+import { spawn } from "child_process";
+import { existsSync } from "fs";
+
+const server = new Server(
+  { name: "copilot-bridge", version: "1.0.0" },
+  { capabilities: { tools: {} } }
+);
+
+server.setRequestHandler(ListToolsRequestSchema, async () => ({
+  tools: [
+    {
+      name: "delegate_to_copilot",
+      description:
+        "Delegate a coding task to GitHub Copilot CLI. Use this to outsource code generation, bug fixes, refactoring, shell commands, or any task where a second AI agent opinion is useful. Copilot can read/write files and run shell commands in the given directory.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "The task or question to send to Copilot",
+          },
+          working_directory: {
+            type: "string",
+            description:
+              "Absolute path of the directory Copilot should work in. Defaults to the current working directory of the MCP server.",
+          },
+        },
+        required: ["prompt"],
+      },
+    },
+  ],
+}));
+
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  if (request.params.name !== "delegate_to_copilot") {
+    throw new Error(`Unknown tool: ${request.params.name}`);
+  }
+
+  const { prompt, working_directory } = request.params.arguments;
+  const cwd =
+    working_directory && existsSync(working_directory)
+      ? working_directory
+      : process.cwd();
+
+  return new Promise((resolve) => {
+    const args = [
+      "-p", prompt,
+      "--allow-all-tools",
+      "--allow-all-paths",
+      "--add-dir", cwd,
+    ];
+
+    const child = spawn("copilot", args, {
+      cwd,
+      env: process.env,
+    });
+
+    let stdout = "";
+    let stderr = "";
+
+    child.stdout.on("data", (data) => (stdout += data.toString()));
+    child.stderr.on("data", (data) => (stderr += data.toString()));
+
+    child.on("close", (code) => {
+      const output = stdout
+        .replace(/\nTotal usage est:[\s\S]*$/, "")
+        .trim();
+
+      resolve({
+        content: [
+          {
+            type: "text",
+            text: output || stderr || `Copilot exited with code ${code}`,
+          },
+        ],
+      });
+    });
+
+    child.on("error", (err) => {
+      resolve({
+        content: [{ type: "text", text: `Failed to start Copilot: ${err.message}` }],
+      });
+    });
+  });
+});
+
+const transport = new StdioServerTransport();
+await server.connect(transport);
+EOF
+
+read -r -d '' CONTENT_SKILL_MD <<'EOF'
+---
+name: copilot
+description: Default executor for coding tasks. Delegate code changes, debugging, refactoring, test work, and repository shell tasks to GitHub Copilot through the configured copilot-bridge MCP server.
+argument-hint: <task>
+allowed-tools: mcp__copilot-bridge__delegate_to_copilot
+---
+
+Use this skill as the default path for coding work.
+
+Take the provided task text and call `mcp__copilot-bridge__delegate_to_copilot` exactly once.
+
+Guidelines:
+- Pass the full user request as the `prompt`.
+- Set `working_directory` to the current project directory when available.
+- Do not rewrite the task unless a tiny clarification is needed for accuracy.
+- Return Copilot's result directly, with only minimal framing if needed.
+- Use this automatically for coding tasks unless the user explicitly asks to stay in Claude, the request is clearly non-coding, or the bridge is unavailable.
+EOF
+
+read -r -d '' CONTENT_CLAUDE_MD <<'EOF'
+For coding tasks, default to delegating the work to GitHub Copilot via the personal `copilot` skill.
+
+Treat the following as coding tasks:
+- writing or editing code
+- debugging build, test, lint, or runtime failures
+- refactoring
+- generating tests
+- running repository shell commands in service of implementation
+
+Behavior:
+- Invoke the `copilot` skill first for coding tasks, even if the user does not explicitly mention Copilot.
+- Use Claude directly for non-coding tasks such as explanation, planning, summarization, and configuration questions that do not require repository implementation.
+- If the user explicitly asks not to use Copilot, follow that instruction.
+- If Copilot delegation fails or is unavailable, state that clearly and then continue in Claude if appropriate.
+EOF
+
+# --- Main Execution ---
 
 require_command claude
 require_command copilot
@@ -112,9 +276,9 @@ require_command node
 require_command npm
 
 say "Installing Claude Code -> Copilot bridge files..."
-install_file "$TEMPLATES_DIR/bridge/package.json" "$BRIDGE_DIR/package.json"
-install_file "$TEMPLATES_DIR/bridge/index.js" "$BRIDGE_DIR/index.js"
-install_file "$TEMPLATES_DIR/skills/copilot/SKILL.md" "$SKILL_DIR/SKILL.md"
+write_file "$BRIDGE_DIR/package.json" "$CONTENT_PACKAGE_JSON"
+write_file "$BRIDGE_DIR/index.js" "$CONTENT_INDEX_JS"
+write_file "$SKILL_DIR/SKILL.md" "$CONTENT_SKILL_MD"
 
 say "Installing bridge dependencies..."
 if [ "$DRY_RUN" -eq 1 ]; then
@@ -128,7 +292,13 @@ register_bridge
 
 if [ "$DEFAULT_MODE" -eq 1 ]; then
   say "Installing default delegation policy..."
-  install_default_policy
+  if [ -f "$USER_CLAUDE_MD" ]; then
+    say "Found existing $USER_CLAUDE_MD"
+    say "Prepending policy to existing file..."
+    prepend_file "$USER_CLAUDE_MD" "$CONTENT_CLAUDE_MD"
+  else
+    write_file "$USER_CLAUDE_MD" "$CONTENT_CLAUDE_MD"
+  fi
 fi
 
 say ""
@@ -138,7 +308,3 @@ say "Next steps:"
 say "1. Run: copilot login"
 say "2. Verify: claude mcp list"
 say "3. Test: claude -p \"/copilot Reply with exactly OK\""
-
-if [ "$DEFAULT_MODE" -eq 1 ]; then
-  say "4. If you already had ~/.claude/CLAUDE.md, manually merge ~/.claude/CLAUDE.copilot-example.md"
-fi

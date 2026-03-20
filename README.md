@@ -1,6 +1,6 @@
 # delegate-claude-to-copilot
 
-![license](https://img.shields.io/badge/license-MIT-green.svg)
+license
 
 Use GitHub Copilot as Claude Code's coding delegate through a small MCP bridge.
 
@@ -27,14 +27,7 @@ If you also install the included personal skill and user instructions, Claude Co
 
 ## Quick start
 
-### 1. Clone this repository
-
-```bash
-git clone git@github.com:StreetStripe/delegate-claude-to-copilot.git
-cd delegate-claude-to-copilot
-```
-
-### 2. Make sure the required tools are installed
+### 1. Make sure the required tools are installed
 
 ```bash
 claude --version
@@ -43,34 +36,29 @@ node --version
 npm --version
 ```
 
-### 3. Authenticate GitHub Copilot
+### 2. Authenticate GitHub Copilot
 
 ```bash
 copilot login
 ```
 
-Optional smoke test:
+### 3. Install the bridge and `/copilot` skill
+
+#### Option A: you can use the /copilot skill on demand
 
 ```bash
-copilot -p "Reply with exactly OK" --allow-all-tools --allow-all-paths -s
+curl -fsSL https://raw.githubusercontent.com/StreetStripe/delegate-claude-to-copilot/main/install.sh | bash
 ```
 
-### 4. Install the bridge and `/copilot` skill
+#### Option B: you make Copilot the default coding delegate
 
 ```bash
-chmod +x install.sh
-./install.sh
+curl -fsSL https://raw.githubusercontent.com/StreetStripe/delegate-claude-to-copilot/main/install.sh | bash -s -- --default
 ```
 
-### 5. Optional: make Copilot the default coding delegate
+If you already have a `~/.claude/CLAUDE.md`, the installer will prepend the necessary instructions to your existing file.
 
-```bash
-./install.sh --default
-```
-
-If you already have a `~/.claude/CLAUDE.md`, the installer will avoid overwriting it and will instead write an example file for you to merge manually.
-
-### 6. Verify the setup
+### 4. Verify the setup
 
 ```bash
 claude mcp list
@@ -86,7 +74,7 @@ OK
 
 ## What gets installed
 
-Running `./install.sh` installs these files into your home directory:
+The installer script (`install.sh`) places these files into your home directory:
 
 - `~/.claude/copilot-mcp/package.json`
 - `~/.claude/copilot-mcp/index.js`
@@ -96,35 +84,15 @@ It also registers this Claude Code MCP server:
 
 - `copilot-bridge`
 
-Running `./install.sh --default` additionally installs or stages:
+Running `./install.sh --default` additionally installs or updates:
 
-- `~/.claude/CLAUDE.md` if you do not already have one
-- `~/.claude/CLAUDE.copilot-example.md` if you already have a personal `CLAUDE.md`
-
-## Repository layout
-
-```text
-.
-├── README.md
-├── LICENSE
-├── install.sh
-├── docs/
-│   └── HOWTO.md
-└── templates/
-    ├── CLAUDE.md
-    ├── bridge/
-    │   ├── index.js
-    │   └── package.json
-    └── skills/
-        └── copilot/
-            └── SKILL.md
-```
+- `~/.claude/CLAUDE.md` (prepended if it already exists)
 
 ## Manual setup
 
 If you want the complete copy-pasteable setup process instead of the installer, see:
 
-[`docs/HOWTO.md`](docs/HOWTO.md)
+`[HOW-TO-INSTALL-MANUALLY.md](HOW-TO-INSTALL-MANUALLY.md)`
 
 ## How the default delegation works
 
@@ -184,4 +152,4 @@ claude -p "/copilot Reply with exactly OK"
 
 ## License
 
-MIT. See [`LICENSE`](LICENSE).
+MIT. See `[LICENSE](LICENSE)`.
