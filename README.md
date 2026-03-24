@@ -1,155 +1,141 @@
-# delegate-claude-to-copilot
+<div align="center">
 
-license
+# 🔀 delegate-claude-to-copilot
 
-Use GitHub Copilot as Claude Code's coding delegate through a small MCP bridge.
+**Free Copilot, but you *really* like working with Claude Code?<br>Bridge them.**
 
-This repo gives you:
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Claude Code](https://img.shields.io/badge/Claude_Code-MCP-blueviolet)](https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview)
+[![GitHub Copilot](https://img.shields.io/badge/GitHub_Copilot-CLI-brightgreen)](https://docs.github.com/en/copilot)
 
-- a local Claude Code MCP bridge that forwards tasks to the GitHub Copilot CLI
-- a reusable `/copilot` Claude skill
-- an optional default policy that tells Claude Code to delegate coding tasks to Copilot first
+A tiny MCP bridge that lets Claude Code delegate coding tasks to GitHub Copilot.
 
-## Highlights
+</div>
 
-- Simple local setup
-- No cloud service in the middle beyond the tools you already use
-- Works with the existing Claude Code MCP flow
-- Safe to adopt incrementally: install only the bridge, or also enable default delegation
+---
 
-## What this does
+## ✨ What you get
 
-This repository does **not** replace Claude Code's underlying model.
+| Component | Description |
+|---|---|
+| **`copilot-bridge`** | Local MCP server forwarding tasks from Claude Code → Copilot CLI |
+| **`/copilot` skill** | Reusable Claude skill you invoke on demand |
+| **Default policy** *(opt-in)* | Makes Claude Code prefer Copilot for all coding work automatically |
 
-Instead, it wires Claude Code to GitHub Copilot through an MCP server named `copilot-bridge`. Claude can then call Copilot as a tool for coding tasks.
+> [!NOTE]
+> This does **not** replace Claude's model. It wires Claude Code to Copilot via MCP so Claude can call Copilot as a tool for code changes, debugging, refactoring, tests, and implementation-oriented shell work.
 
-If you also install the included personal skill and user instructions, Claude Code will prefer Copilot for code changes, debugging, refactoring, tests, and implementation-oriented shell work.
+## 🚀 Quick start
 
-## Quick start
-
-### 1. Make sure the required tools are installed
+### Prerequisites
 
 ```bash
-claude --version
-copilot --version
-node --version
+claude --version   # Claude Code CLI
+copilot --version  # GitHub Copilot CLI
+node --version     # Node.js ≥ 18
 npm --version
 ```
 
-### 2. Authenticate GitHub Copilot
+### Setup
 
 ```bash
+# 1. Authenticate Copilot
 copilot login
-```
 
-### 3. Install the bridge and `/copilot` skill
-
-#### Option A: you can use the /copilot skill on demand
-
-```bash
+# 2a. Install bridge + /copilot skill (on-demand mode)
 curl -fsSL https://raw.githubusercontent.com/StreetStripe/delegate-claude-to-copilot/main/install.sh | bash
-```
 
-#### Option B: you make Copilot the default coding delegate
-
-```bash
+# 2b. …or make Copilot the default coding delegate
 curl -fsSL https://raw.githubusercontent.com/StreetStripe/delegate-claude-to-copilot/main/install.sh | bash -s -- --default
 ```
 
-If you already have a `~/.claude/CLAUDE.md`, the installer will prepend the necessary instructions to your existing file.
+> Existing `~/.claude/CLAUDE.md`? The installer prepends — it won't clobber your config.
 
-### 4. Verify the setup
+### Verify
 
 ```bash
-claude mcp list
-claude -p "/copilot Reply with exactly OK"
+claude mcp list                              # should show copilot-bridge ✓
+claude -p "/copilot Reply with exactly OK"   # should return OK
 ```
 
-Expected output should include:
+## 📦 What gets installed
 
 ```text
-copilot-bridge: node /Users/.../.claude/copilot-mcp/index.js - ✓ Connected
-OK
+~/.claude/
+├── copilot-mcp/
+│   ├── package.json
+│   └── index.js          ← MCP server
+├── skills/copilot/
+│   └── SKILL.md           ← /copilot skill definition
+└── CLAUDE.md              ← (--default only) delegation instructions
 ```
 
-## What gets installed
+Plus a registered Claude Code MCP server entry: **`copilot-bridge`**.
 
-The installer script (`install.sh`) places these files into your home directory:
+## 🧩 Manual setup
 
-- `~/.claude/copilot-mcp/package.json`
-- `~/.claude/copilot-mcp/index.js`
-- `~/.claude/skills/copilot/SKILL.md`
+Prefer copy-paste over an installer? See **[HOW-TO-INSTALL-MANUALLY.md](HOW-TO-INSTALL-MANUALLY.md)**.
 
-It also registers this Claude Code MCP server:
+## ⚙️ How default delegation works
 
-- `copilot-bridge`
+Two Claude-side pieces drive the behavior:
 
-Running `./install.sh --default` additionally installs or updates:
+- `~/.claude/skills/copilot/SKILL.md` — skill definition
+- `~/.claude/CLAUDE.md` — personal instruction file
 
-- `~/.claude/CLAUDE.md` (prepended if it already exists)
+This means:
 
-## Manual setup
+- Claude still handles non-coding tasks directly
+- You can override per session or per task
+- Removing `CLAUDE.md` disables auto-delegation without uninstalling the bridge
 
-If you want the complete copy-pasteable setup process instead of the installer, see:
+## 🤝 Works great with ruflo
 
-`[HOW-TO-INSTALL-MANUALLY.md](HOW-TO-INSTALL-MANUALLY.md)`
+This project pairs nicely with **[ruflo](https://github.com/ruvnet/ruflo)** — an agentic software factory for ultra-fast, AI-native development. Use ruflo's orchestration layer alongside this bridge to supercharge your Claude + Copilot workflow.
 
-## How the default delegation works
+## 🔧 Troubleshooting
 
-The default behavior is implemented with two Claude-side pieces:
-
-- a personal skill at `~/.claude/skills/copilot/SKILL.md`
-- a personal instruction file at `~/.claude/CLAUDE.md`
-
-That means:
-
-- you can still use Claude directly for non-coding tasks
-- you can tell Claude not to use Copilot for a specific session or task
-- you can remove the default behavior without uninstalling the bridge itself
-
-## Troubleshooting
-
-### Claude cannot see `copilot-bridge`
-
-Run:
+<details>
+<summary><b>Claude cannot see <code>copilot-bridge</code></b></summary>
 
 ```bash
-claude mcp list
+claude mcp list        # check status
+./install.sh           # reinstall if missing
 ```
+</details>
 
-If the bridge is missing, rerun:
-
-```bash
-./install.sh
-```
-
-### Copilot is installed but fails to answer
-
-Re-authenticate:
+<details>
+<summary><b>Copilot is installed but fails to answer</b></summary>
 
 ```bash
-copilot login
-```
-
-Then test again:
-
-```bash
+copilot login          # re-authenticate
 copilot -p "Reply with exactly OK" --allow-all-tools --allow-all-paths -s
 ```
+</details>
 
-### Default delegation is not happening
+<details>
+<summary><b>Default delegation is not happening</b></summary>
 
-Check:
-
-- `~/.claude/skills/copilot/SKILL.md`
-- `~/.claude/CLAUDE.md`
-
-And verify with:
+Verify both files exist:
 
 ```bash
+cat ~/.claude/skills/copilot/SKILL.md
+cat ~/.claude/CLAUDE.md
 claude -p "/copilot Reply with exactly OK"
 ```
+</details>
 
-## License
+## 📄 License
 
-MIT. See `[LICENSE](LICENSE)`.
+MIT — see [LICENSE](LICENSE).
+
+---
+
+<div align="center">
+
+**Contributions are very welcome!** 🎉
+
+Whether it's a bug fix, a feature idea, docs improvement, or just a question — open an issue or submit a PR.<br>
+Let's make Claude + Copilot better together.
+
+</div>
