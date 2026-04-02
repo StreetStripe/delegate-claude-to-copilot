@@ -3,6 +3,7 @@ set -euo pipefail
 
 DEFAULT_MODE=0
 DRY_RUN=0
+NPX_MODE=0
 
 for arg in "$@"; do
   case "$arg" in
@@ -12,14 +13,19 @@ for arg in "$@"; do
     --dry-run)
       DRY_RUN=1
       ;;
+    --npx)
+      NPX_MODE=1
+      ;;
     -h|--help)
       cat <<'EOF'
-Usage: ./install.sh [--default] [--dry-run]
+Usage: ./install.sh [--default] [--npx] [--dry-run]
 
 Options:
   --default  Also install the user-level CLAUDE.md instructions that make Copilot
              the default coding delegate. If ~/.claude/CLAUDE.md already exists,
              the instructions will be prepended to it.
+  --npx      Use the published npm package (@streetstripe/copilot-mcp-bridge)
+             instead of copying the bridge source locally.
   --dry-run  Show what would be done without modifying files.
 EOF
       exit 0
@@ -111,12 +117,20 @@ prepend_file() {
 register_bridge() {
   if [ "$DRY_RUN" -eq 1 ]; then
     say "[dry-run] claude mcp remove copilot-bridge"
-    say "[dry-run] claude mcp add --scope user copilot-bridge -- node $BRIDGE_DIR/index.js"
+    if [ "$NPX_MODE" -eq 1 ]; then
+      say "[dry-run] claude mcp add --scope user copilot-bridge -- npx @streetstripe/copilot-mcp-bridge"
+    else
+      say "[dry-run] claude mcp add --scope user copilot-bridge -- node $BRIDGE_DIR/index.js"
+    fi
     return
   fi
 
   claude mcp remove copilot-bridge >/dev/null 2>&1 || true
-  claude mcp add --scope user copilot-bridge -- node "$BRIDGE_DIR/index.js"
+  if [ "$NPX_MODE" -eq 1 ]; then
+    claude mcp add --scope user copilot-bridge -- npx @streetstripe/copilot-mcp-bridge
+  else
+    claude mcp add --scope user copilot-bridge -- node "$BRIDGE_DIR/index.js"
+  fi
 }
 
 # --- Content Definitions ---
@@ -276,15 +290,23 @@ require_command node
 require_command npm
 
 say "Installing Claude Code -> Copilot bridge files..."
-write_file "$BRIDGE_DIR/package.json" "$CONTENT_PACKAGE_JSON"
-write_file "$BRIDGE_DIR/index.js" "$CONTENT_INDEX_JS"
+if [ "$NPX_MODE" -eq 1 ]; then
+  say "Using published npm package — skipping local bridge file copy."
+else
+  write_file "$BRIDGE_DIR/package.json" "$CONTENT_PACKAGE_JSON"
+  write_file "$BRIDGE_DIR/index.js" "$CONTENT_INDEX_JS"
+fi
 write_file "$SKILL_DIR/SKILL.md" "$CONTENT_SKILL_MD"
 
-say "Installing bridge dependencies..."
-if [ "$DRY_RUN" -eq 1 ]; then
-  say "[dry-run] npm install --prefix $BRIDGE_DIR"
+if [ "$NPX_MODE" -eq 1 ]; then
+  say "Skipping local npm install (npx will fetch the package on demand)."
 else
-  npm install --prefix "$BRIDGE_DIR"
+  say "Installing bridge dependencies..."
+  if [ "$DRY_RUN" -eq 1 ]; then
+    say "[dry-run] npm install --prefix $BRIDGE_DIR"
+  else
+    npm install --prefix "$BRIDGE_DIR"
+  fi
 fi
 
 say "Registering copilot-bridge in Claude Code..."

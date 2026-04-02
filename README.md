@@ -5,8 +5,10 @@
 **Free Copilot, but you *really* like working with Claude Code?<br>Bridge them.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![npm](https://img.shields.io/npm/v/@streetstripe/copilot-mcp-bridge)](https://www.npmjs.com/package/@streetstripe/copilot-mcp-bridge)
 [![Claude Code](https://img.shields.io/badge/Claude_Code-MCP-blueviolet)](https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview)
 [![GitHub Copilot](https://img.shields.io/badge/GitHub_Copilot-CLI-brightgreen)](https://docs.github.com/en/copilot)
+[![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-Plugin_Marketplace-ff69b4)](https://github.com/StreetStripe/delegate-claude-to-copilot)
 
 A tiny MCP bridge that lets Claude Code delegate coding tasks to GitHub Copilot.
 
@@ -49,6 +51,20 @@ curl -fsSL https://raw.githubusercontent.com/StreetStripe/delegate-claude-to-cop
 curl -fsSL https://raw.githubusercontent.com/StreetStripe/delegate-claude-to-copilot/main/install.sh | bash -s -- --default
 ```
 
+### Alternative: install via npm
+
+If you prefer using the published npm package instead of local file copies:
+
+```bash
+# Install with npx-based bridge (no local source files needed)
+curl -fsSL https://raw.githubusercontent.com/StreetStripe/delegate-claude-to-copilot/main/install.sh | bash -s -- --npx
+
+# Or combine with default delegation
+curl -fsSL https://raw.githubusercontent.com/StreetStripe/delegate-claude-to-copilot/main/install.sh | bash -s -- --npx --default
+```
+
+This registers the bridge as `npx @streetstripe/copilot-mcp-bridge` — npm fetches the package on demand so there are no local source files to maintain.
+
 > Existing `~/.claude/CLAUDE.md`? The installer prepends — it won't clobber your config.
 
 ### Verify
@@ -88,6 +104,10 @@ This means:
 - Claude still handles non-coding tasks directly
 - You can override per session or per task
 - Removing `CLAUDE.md` disables auto-delegation without uninstalling the bridge
+
+## 🏪 Claude Code Plugin Marketplace
+
+This project is packaged for the [Claude Code Plugin Marketplace](https://code.claude.com/docs/en/plugin-marketplaces). The manifest at [`claude-plugin.json`](claude-plugin.json) describes the MCP server, its tools, installation methods, and skill metadata so the plugin can be discovered and installed directly from Claude Code.
 
 ## 🤝 Works great with ruflo
 
