@@ -1,0 +1,64 @@
+{
+  "name": "delegate-claude-to-copilot",
+  "displayName": "Claude → Copilot Bridge",
+  "version": "1.0.0",
+  "type": "mcp-server",
+  "description": "MCP bridge that lets Claude Code delegate coding tasks to GitHub Copilot CLI. Includes a /copilot skill and optional default-delegation policy.",
+  "homepage": "https://github.com/StreetStripe/delegate-claude-to-copilot",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/StreetStripe/delegate-claude-to-copilot.git"
+  },
+  "author": "StreetStripe",
+  "publisher": "StreetStripe",
+  "license": "MIT",
+  "capabilities": {
+    "tools": [
+      {
+        "name": "delegate_to_copilot",
+        "description": "Delegate a coding task to GitHub Copilot CLI. Use this to outsource code generation, bug fixes, refactoring, shell commands, or any task where a second AI agent opinion is useful.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "prompt": {
+              "type": "string",
+              "description": "The task or question to send to Copilot"
+            },
+            "working_directory": {
+              "type": "string",
+              "description": "Absolute path of the directory Copilot should work in. Defaults to the current working directory of the MCP server."
+            }
+          },
+          "required": ["prompt"]
+        }
+      }
+    ]
+  },
+  "installation": {
+    "methods": [
+      {
+        "type": "script",
+        "command": "curl -fsSL https://raw.githubusercontent.com/StreetStripe/delegate-claude-to-copilot/main/install.sh | bash"
+      },
+      {
+        "type": "npm",
+        "package": "@streetstripe/copilot-mcp-bridge",
+        "command": "npx @streetstripe/copilot-mcp-bridge"
+      }
+    ]
+  },
+  "requirements": [
+    "node>=18",
+    "copilot-cli",
+    "claude-code"
+  ],
+  "skill": "SKILL-USE-COPILOT-BRIDGE.md",
+  "keywords": [
+    "claude-code",
+    "mcp",
+    "copilot",
+    "skill",
+    "delegation",
+    "bridge"
+  ]
+}
