@@ -1,0 +1,12 @@
+{
+  "name": "copilot-bridge",
+  "description": "Bridge Claude Code to GitHub Copilot CLI — delegate coding tasks to Copilot via MCP",
+  "version": "1.0.0",
+  "author": {
+    "name": "StreetStripe"
+  },
+  "homepage": "https://github.com/StreetStripe/delegate-claude-to-copilot",
+  "repository": "https://github.com/StreetStripe/delegate-claude-to-copilot",
+  "license": "MIT",
+  "keywords": ["copilot", "mcp", "bridge", "delegation", "claude-code"]
+}

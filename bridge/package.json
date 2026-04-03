@@ -22,11 +22,15 @@
     "copilot",
     "bridge",
     "skill",
-    "delegation"
+    "delegation",
+    "model-context-protocol"
   ],
   "author": "StreetStripe",
   "license": "MIT",
   "homepage": "https://github.com/StreetStripe/delegate-claude-to-copilot",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0"
   }

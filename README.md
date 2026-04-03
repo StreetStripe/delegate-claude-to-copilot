@@ -88,6 +88,26 @@ claude -p "/copilot Reply with exactly OK"   # should return OK
 
 Plus a registered Claude Code MCP server entry: **`copilot-bridge`**.
 
+## 🧩 Install as a Claude Code plugin
+
+If you use [Claude Code plugins](https://code.claude.com/docs/en/plugins), install directly from the marketplace:
+
+```bash
+/plugin install copilot-bridge@StreetStripe/delegate-claude-to-copilot
+```
+
+Or test locally during development:
+
+```bash
+claude --plugin-dir ./path/to/delegate-claude-to-copilot
+```
+
+The plugin provides:
+- **`/copilot-bridge:copilot`** skill
+- **`copilot-bridge`** MCP server (via `npx copilot-mcp-bridge`)
+
+> Requires `copilot` CLI to be installed and authenticated (`copilot login`).
+
 ## 🧩 Manual setup
 
 Prefer copy-paste over an installer? See **[HOW-TO-INSTALL-MANUALLY.md](HOW-TO-INSTALL-MANUALLY.md)**.
