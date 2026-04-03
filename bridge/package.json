@@ -1,6 +1,6 @@
 {
   "name": "@streetstripe/copilot-mcp-bridge",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "MCP bridge that lets Claude Code delegate coding tasks to GitHub Copilot CLI",
   "type": "module",
   "main": "index.js",
