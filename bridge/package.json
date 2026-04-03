@@ -13,7 +13,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/StreetStripe/delegate-claude-to-copilot.git",
+    "url": "git+https://github.com/StreetStripe/delegate-claude-to-copilot.git",
     "directory": "bridge"
   },
   "keywords": [
