@@ -118,7 +118,7 @@ register_bridge() {
   if [ "$DRY_RUN" -eq 1 ]; then
     say "[dry-run] claude mcp remove copilot-bridge"
     if [ "$NPX_MODE" -eq 1 ]; then
-      say "[dry-run] claude mcp add --scope user copilot-bridge -- npx @streetstripe/copilot-mcp-bridge"
+      say "[dry-run] claude mcp add --scope user copilot-bridge -- npx --yes @streetstripe/copilot-mcp-bridge"
     else
       say "[dry-run] claude mcp add --scope user copilot-bridge -- node $BRIDGE_DIR/index.js"
     fi
@@ -127,7 +127,7 @@ register_bridge() {
 
   claude mcp remove copilot-bridge >/dev/null 2>&1 || true
   if [ "$NPX_MODE" -eq 1 ]; then
-    claude mcp add --scope user copilot-bridge -- npx @streetstripe/copilot-mcp-bridge
+    claude mcp add --scope user copilot-bridge -- npx --yes @streetstripe/copilot-mcp-bridge
   else
     claude mcp add --scope user copilot-bridge -- node "$BRIDGE_DIR/index.js"
   fi
@@ -287,7 +287,11 @@ EOF
 require_command claude
 require_command copilot
 require_command node
-require_command npm
+if [ "$NPX_MODE" -eq 1 ]; then
+  require_command npx
+else
+  require_command npm
+fi
 
 say "Installing Claude Code -> Copilot bridge files..."
 if [ "$NPX_MODE" -eq 1 ]; then

@@ -43,7 +43,7 @@
       {
         "type": "npm",
         "package": "@streetstripe/copilot-mcp-bridge",
-        "command": "npx @streetstripe/copilot-mcp-bridge"
+        "command": "npx --yes @streetstripe/copilot-mcp-bridge"
       }
     ]
   },
