@@ -27,6 +27,14 @@ A tiny MCP bridge that lets Claude Code delegate coding tasks to GitHub Copilot.
 > [!NOTE]
 > This does **not** replace Claude's model. It wires Claude Code to Copilot via MCP so Claude can call Copilot as a tool for code changes, debugging, refactoring, tests, and implementation-oriented shell work.
 
+## 🔒 Data flow & privacy
+
+When you use this bridge, your **prompt text** and **working directory** are forwarded to the locally installed GitHub Copilot CLI, which sends them to **GitHub's AI services** for processing. No data is collected, stored, or logged by this bridge itself.
+
+Copilot runs with `--allow-all-tools` and `--allow-all-paths`, giving it broad read/write access to the working directory.
+
+See [PRIVACY.md](PRIVACY.md) for the full privacy policy and links to [GitHub's privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
+
 ## 🚀 Quick start
 
 ### Prerequisites
@@ -164,6 +172,34 @@ cat ~/.claude/CLAUDE.md
 claude -p "/copilot Reply with exactly OK"
 ```
 </details>
+
+## 💡 Example prompts
+
+These examples demonstrate core functionality:
+
+```bash
+# 1. Simple verification
+claude -p "/copilot Reply with exactly OK"
+
+# 2. Code generation
+claude -p "/copilot Create a Python function that reads a CSV file and returns the top 5 rows as a list of dicts"
+
+# 3. Refactoring
+claude -p "/copilot Refactor the function in src/utils.js to use async/await instead of callbacks"
+
+# 4. Bug fix
+claude -p "/copilot Fix the off-by-one error in the pagination logic in src/api.ts"
+
+# 5. Test generation
+claude -p "/copilot Write unit tests for the User model in tests/test_user.py using pytest"
+```
+
+## 🆘 Support
+
+- **Issues & bug reports:** [GitHub Issues](https://github.com/StreetStripe/delegate-claude-to-copilot/issues)
+- **Discussions & questions:** [GitHub Discussions](https://github.com/StreetStripe/delegate-claude-to-copilot/discussions)
+- **Maintainer:** [@StreetStripe](https://github.com/StreetStripe)
+- **Security vulnerabilities:** Please report privately via [GitHub Security Advisories](https://github.com/StreetStripe/delegate-claude-to-copilot/security/advisories)
 
 ## 📄 License
 

@@ -163,6 +163,8 @@ const server = new Server(
   { capabilities: { tools: {} } }
 );
 
+const MAX_OUTPUT_CHARS = 80_000;
+
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     {
@@ -183,6 +185,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           },
         },
         required: ["prompt"],
+      },
+      annotations: {
+        title: "Delegate to Copilot",
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: true,
       },
     },
   ],
@@ -219,9 +228,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     child.stderr.on("data", (data) => (stderr += data.toString()));
 
     child.on("close", (code) => {
-      const output = stdout
+      let output = stdout
         .replace(/\nTotal usage est:[\s\S]*$/, "")
         .trim();
+
+      if (output.length > MAX_OUTPUT_CHARS) {
+        const half = Math.floor(MAX_OUTPUT_CHARS / 2);
+        output =
+          output.slice(0, half) +
+          `\n\n[… truncated ${output.length - MAX_OUTPUT_CHARS} characters …]\n\n` +
+          output.slice(-half);
+      }
 
       resolve({
         content: [
