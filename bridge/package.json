@@ -25,7 +25,7 @@
     "delegation",
     "model-context-protocol"
   ],
-  "author": "StreetStripe",
+  "author": "MavromatisK @StreetStripe",
   "license": "MIT",
   "homepage": "https://github.com/StreetStripe/delegate-claude-to-copilot",
   "engines": {

@@ -2,7 +2,7 @@
 name: copilot
 description: Default executor for coding tasks. Delegate code changes, debugging, refactoring, test work, and repository shell tasks to GitHub Copilot through the configured copilot-bridge MCP server.
 version: 1.0.0
-author: StreetStripe
+author: MavromatisK @StreetStripe
 argument-hint: <task>
 allowed-tools: mcp__copilot-bridge__delegate_to_copilot
 tags: coding, delegation, copilot, mcp
