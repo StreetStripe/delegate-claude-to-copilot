@@ -63,7 +63,7 @@ curl -fsSL https://raw.githubusercontent.com/StreetStripe/delegate-claude-to-cop
 curl -fsSL https://raw.githubusercontent.com/StreetStripe/delegate-claude-to-copilot/main/install.sh | bash -s -- --npx --default
 ```
 
-This registers the bridge as `npx @streetstripe/copilot-mcp-bridge` — npm fetches the package on demand so there are no local source files to maintain.
+This registers the bridge as `npx --yes @streetstripe/copilot-mcp-bridge` (non-interactive) — npm fetches the package on demand so there are no local source files to maintain.
 
 > Existing `~/.claude/CLAUDE.md`? The installer prepends — it won't clobber your config.
 
