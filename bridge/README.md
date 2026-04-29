@@ -31,9 +31,30 @@ A tiny MCP bridge that lets Claude Code delegate coding tasks to GitHub Copilot.
 
 When you use this bridge, your **prompt text** and **working directory** are forwarded to the locally installed GitHub Copilot CLI, which sends them to **GitHub's AI services** for processing. No data is collected, stored, or logged by this bridge itself.
 
-Copilot runs with `--allow-all-tools` and `--allow-all-paths`, giving it broad read/write access to the working directory.
+Copilot runs with `--allow-all-tools` and access scoped to the validated working directory only (see **Security** below).
 
 See [PRIVACY.md](PRIVACY.md) for the full privacy policy and links to [GitHub's privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
+
+## 🛡️ Security
+
+The MCP endpoint is treated as an authorization boundary. Three defences are active by default:
+
+| Defence | What it does |
+|---|---|
+| **Path allowlisting** | `working_directory` must be at or below one of the directories in `COPILOT_BRIDGE_ALLOWED_DIRS`. Requests outside that set are rejected before Copilot is invoked. |
+| **Environment minimization** | Only a safe allow-list of env vars (`PATH`, `HOME`, …) plus `GITHUB_*` / `GH_*` / `COPILOT_*` auth variables are forwarded to the child process. Everything else in the MCP server's environment (other tokens, passwords, private config) is excluded. |
+| **Output redaction** | Common secret patterns (GitHub PATs, `sk-…` API keys, etc.) are replaced with `[REDACTED]` in the output returned to the caller. |
+
+### Configuring allowed directories
+
+Set the `COPILOT_BRIDGE_ALLOWED_DIRS` environment variable to a colon-separated list of absolute paths:
+
+```bash
+# Allow two project roots (Unix — use `;` as separator on Windows)
+COPILOT_BRIDGE_ALLOWED_DIRS=/home/alice/projects:/home/alice/scratch
+```
+
+If the variable is not set, the bridge defaults to the MCP server's own working directory (`process.cwd()`), which is typically the most restrictive safe default.
 
 ## 🚀 Quick start
 
@@ -157,7 +178,7 @@ claude mcp list        # check status
 
 ```bash
 copilot login          # re-authenticate
-copilot -p "Reply with exactly OK" --allow-all-tools --allow-all-paths -s
+copilot -p "Reply with exactly OK" --allow-all-tools -s
 ```
 </details>
 
